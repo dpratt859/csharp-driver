@@ -41,8 +41,8 @@ before_test:
 
 test:
   assemblies:
-    - src/Cassandra.Tests/bin/$(configuration)/Cassandra.Tests.dll
-#    - src/Cassandra.IntegrationTests/bin/$(configuration)/Cassandra.IntegrationTests.dll
+#    - src/Cassandra.Tests/bin/$(configuration)/Cassandra.Tests.dll
+    - src/Cassandra.IntegrationTests/bin/$(configuration)/Cassandra.IntegrationTests.dll
 
   categories:
     only:
