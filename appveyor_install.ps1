@@ -12,22 +12,30 @@ If (!(Test-Path C:\ProgramData\chocolatey\bin\ant.bat)) {
   cmd /c mklink C:\ProgramData\chocolatey\bin\ant.bat C:\ProgramData\chocolatey\bin\ant.exe
 }
 
+Write-Host "Created ant symbolic link"
+
+Write-Host "Installing java Cryptographic Extensions, needed for SSL..."
 # Install Java Cryptographic Extensions, needed for SSL.
 $target = "$($env:JAVA_HOME)\jre\lib\security"
 # If this file doesn't exist we know JCE hasn't been installed.
 $jce_indicator = "$target\README.txt"
 $zip = "C:\Users\appveyor\jce_policy-8.zip"
+
 If (!(Test-Path $jce_indicator)) {
   # Download zip to staging area if it doesn't exist, we do this because
   # we extract it to the directory based on the platform and we want to cache
   # this file so it can apply to all platforms.
   if(!(Test-Path $zip)) {
     $url = "https://www.dropbox.com/s/al1e6e92cjdv7m7/jce_policy-8.zip?dl=1"
+    Write-Host "Downloading file..."
     (new-object System.Net.WebClient).DownloadFile($url, $zip)
+    Write-Host "Download completed."
   }
 
   Add-Type -AssemblyName System.IO.Compression.FileSystem
+  Write-Host "Extracting zip file..."
   [System.IO.Compression.ZipFile]::ExtractToDirectory($zip, $target)
+  Write-Host "Extraction completed."
 
   $jcePolicyDir = "$target\UnlimitedJCEPolicyJDK8"
   Move-Item $jcePolicyDir\* $target\ -force
@@ -35,11 +43,15 @@ If (!(Test-Path $jce_indicator)) {
 }
 
 # Install Python Dependencies for CCM.
+Write-Host "Installing Python Dependencies for CCM..."
 Start-Process python -ArgumentList "-m pip install psutil pyYaml six" -Wait -NoNewWindow
+Write-Host "Installed Python Dependencies for CCM."
 
 # Clone ccm from git and use master.
 If (!(Test-Path $env:CCM_PATH)) {
-  Start-Process git -ArgumentList "clone https://github.com/riptano/ccm.git $($env:CCM_PATH)" -Wait -NoNewWindow
+  Write-Host "Cloning git ccm..."
+  Start-Process git -ArgumentList "clone https://github.com/pcmanus/ccm.git $($env:CCM_PATH)" -Wait -NoNewWindow
+  Write-Host "git ccm cloned"
 }
 
 # Copy ccm -> ccm.py so windows knows to run it.
@@ -49,6 +61,11 @@ If (!(Test-Path $env:CCM_PATH\ccm.py)) {
 
 [Environment]::SetEnvironmentVariable("Path", "$($env:CCM_PATH);$($env:PATH)", "Machine")
 [Environment]::SetEnvironmentVariable("PYTHONPATH", "$($env:CCM_PATH);$($env:PYTHONPATH)", "Machine")
+
+Write-Host "Set execution Policy"
+Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process
+
+[Environment]::SetEnvironmentVariable("PATHEXT", "$($env:PATHEXT);.PY", "Machine")
 
 #Start-Process cmd -ArgumentList "/c assoc .py=Python.File" -Wait -NoNewWindow
 #Start-Process cmd -ArgumentList "/c ftype Python.File=$($env:PYTHON)\pythonw.exe `"%1`" %*" -Wait -NoNewWindow
@@ -61,5 +78,3 @@ If (!(Test-Path C:\Users\appveyor\.ccm\repository\$env:cassandra_version)) {
   Start-Process python -ArgumentList "$($env:CCM_PATH)\ccm.py remove predownload" -Wait -NoNewWindow
 }
 
-Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process
-Write-Host "Set execution Policy"
