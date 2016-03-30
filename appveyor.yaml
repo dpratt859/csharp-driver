@@ -1,0 +1,80 @@
+version: 3.0.5.{build}
+skip_tags: true
+shallow_clone: true
+cache:
+  - C:\ProgramData\chocolatey\bin                                                                                                     
+  - C:\ProgramData\chocolatey\lib
+  - C:\Users\appveyor\.ccm\repository
+  - C:\Users\appveyor\ccm
+os: Visual Studio 2015
+platform:
+  - Any CPU
+configuration:
+  - Debug
+environment:
+  NUNIT_PATH: nunit-console
+  CASSANDRA_VERSION: 3.3
+
+matrix:
+  fast_finish: true   
+
+init:
+  - ps: >-
+      Write-Host "Init..."
+install:
+  - ps: .\appveyor_install.ps1
+
+before_build:
+  - ps: >-
+      Write-Host "Before build..."
+
+      Start-Process cmd -ArgumentList "ccm.py status"
+
+      Start-Process cmd -ArgumentList "ccm status"
+
+build:
+  project: src/Cassandra.sln
+
+before_test:
+  - ps: >-
+      Write-Host "Before tests..."
+
+test:
+  assemblies:
+    - src/Cassandra.Tests/bin/$(configuration)/Cassandra.Tests.dll
+#    - src/Cassandra.IntegrationTests/bin/$(configuration)/Cassandra.IntegrationTests.dll
+
+  categories:
+    only:
+      - appveyor
+#    except:
+#      - long
+#      - duration
+# build_script:
+#   - ps: >-
+#       Write-Host "Clean..."
+
+#       msbuild build/build.proj /v:m /t:clean
+
+#       Write-Host "Building..."
+
+#       msbuild build/build.proj /v:m /t:compile
+
+#       Write-Host "Built"
+
+# test_script:
+#   - ps: >-
+#       Set-ExecutionPolicy Unrestricted
+
+#       Write-Host "Checking if test dll was created"
+
+#       If ((Test-Path "src/Cassandra.Tests/bin/Release/Cassandra.Tests.dll") -And (Test-Path "src/Cassandra.IntegrationTests/bin/Release/Cassandra.IntegrationTests.dll")) {
+#         Write-Host "Executing integration tests"
+#         msbuild build/build.proj /v:m /t:test
+#       } Else {
+#         Write-Host "Test dll not created"
+#       }
+
+on_failure:
+  - ps: >-
+      Write-Host "Build failed"

@@ -38,7 +38,7 @@ namespace Cassandra.IntegrationTests.Mapping.Tests
                 _movieTable.Insert(movie).Execute();
         }
 
-        [Test]
+        [Test, Category("appveyor")]
         public void First_Sync()
         {
             var actualMovie = _mapper.First<Movie>(_selectAllDefaultCql);
